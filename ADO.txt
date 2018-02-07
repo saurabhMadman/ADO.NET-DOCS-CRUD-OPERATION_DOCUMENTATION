@@ -1,0 +1,241 @@
+
+//**********ADO.NET CRUD OPERATION CODE*****************************//
+
+
+ADO.NET
+1. Connect to the Database
+2. Prepare an SQL Command
+3. Execute the Command
+4. Retrieve the results and display in the a
+
+
+
+ *************Sql*********************** 
+ Sample ADO.NET code to connect to SQL Server Database and retrieve data. Notice that we are using SQLConnection, SQLCommand and SQLDataReader classes . 
+ All the objects are prefixed with the word SQL. All these classes are present in System.Data.SqlClient namespace. 
+ So, we can say that the .NET data provider for SQL Server is System.Data.SqlClient.
+
+
+ ******************sql Server at backend********************************
+
+ SqlConnection con = new SqlConnection("data source=.; database=Sample; integrated security=SSPI");
+ SqlCommand cmd = new SqlCommand("Select * from tblProduct", con);
+ con.Open();
+ SqlDataReader rdr = cmd.ExecuteReader();
+ GridView1.DataSource = rdr;
+ GridView1.DataBind();
+ con.Close();
+
+ *****************Oracle at backend *********************************************************
+ OracleConnection con = new OracleConnection("Oracle Database Connection String");
+ OracleCommand cmd = new OracleCommand("Select * from tblProduct", con);
+ con.Open();
+ OracleDataReader rdr = cmd.ExecuteReader();
+ GridView1.DataSource = rdr;
+ GridView1.DataBind();
+ con.Close(); 
+
+ ***************************OLE(Excel ,Access and other file used for storage)*********************************
+ 
+if we want to connect to OLEDB datasources like Excel, Access etc, we can use OleDbConnection, 
+ OleDbCommand and OleDbDataReader classes. So, .NET data provider for OLEDB is System.Data.OleDb. 
+
+ we have had an introduction to ADO.NET. We also understood about the different .NET data providers. The key to understanding ADO.NET, is to understand about the following objects. 
+ 1. Connection
+ 2. Command
+ 3. DataReader
+ 4. DataAdapter
+ 5. DataSet
+
+ ***********************************************Connection String*************************************************:-
+ 
+ SqlConnection connection = new SqlConnection("data source=.; database=SampleDB; integrated security=SSPI");
+ The "data source" is the name or IP Address of the SQL Server that we want to connect to.
+ Note: Connections should be opened as late as possible, and should be closed as early as possible.
+
+ example:-
+ protected void Page_Load(object sender, EventArgs e)
+ {
+    //**comment**Create the connection object
+
+    SqlConnection connection = new SqlConnection("data source=.; database=Sample_Test_DB; integrated security=SSPI");;
+    try
+    {
+        // Pass the connection to the command object, so the command object knows on which
+        // connection to execute the command
+
+        SqlCommand cmd = new SqlCommand("Select * from tblProductInventory", connection);
+        // Open the connection. Otherwise you get a runtime error. An open connection is
+        // required to execute the command
+
+        connection.Open();
+        GridView1.DataSource = cmd.ExecuteReader();
+        GridView1.DataBind();
+    }
+    catch (Exception ex)
+    {
+        // Handle Exceptions, if any
+    }
+    finally
+    {
+        // The finally block is guarenteed to execute even if there is an exception. 
+        //  This ensures connections are always properly closed.
+        connection.Close();
+    }
+}
+
+**********************************************************************************************************************************
+ We can also use "using" statement to properly close the connection as shown below. We don't have to explicitly call Close() method, when using is used. The connection will be automatically  closed for us.
+ protected void Page_Load(object sender, EventArgs e)
+ {
+    using (SqlConnection connection = new SqlConnection("data source=.; database=Sample_Test_DB; integrated security=SSPI"))
+    {
+        SqlCommand cmd = new SqlCommand("Select * from tblProductInventory", connection);
+        connection.Open();
+        GridView1.DataSource = cmd.ExecuteReader();
+        GridView1.DataBind();
+    }
+ }
+
+****************************************************************************************************************************************
+ Common Interview Question: What are the 2 uses of an using statement in C#?
+****************************************************************************************************************************************
+ 1. To import a namespace. Example: using System;
+ 2. To close connections properly as shown in the example above 
+
+ There are 2 issues with hard coding the connection strings in application code
+
+ 1. For some reason, if we want to point our application to a different database server, we will have to change the application code. If you change application code, the application          requires a re-build and a re-deployment which is a time waster.
+ 2. All the pages that has the connection string hard coded needs to change. This adds to the maintenance overhead and is also error prone.
+
+  an asp.net web application, the configuration strings can be stored in web.config file, as shown below. Give a meaningful name to your connection string. Since we are working with sql       server, the provider name is System.Data.SqlClient.
+
+**************************************adding connnectionsting at web.config and use it globally****************************************************
+  <connectionStrings>
+   <add name="DatabaseConnectionString"
+        connectionString="data source=.; database=Sample_Test_DB; Integrated Security=SSPI"
+        providerName="System.Data.SqlClient" />
+   </connectionStrings> 
+
+How to read the connection string from web.config file?
+
+Use the ConnectionStrings property of the ConfigurationManager class to retrieve the connection string value from web.config. 
+ConfigurationManager class is present in System.Configuration namespace.
+protected void Page_Load(object sender, EventArgs e)
+{
+    string ConnectionString = ConfigurationManager.ConnectionStrings["DatabaseConnectionString"].ConnectionString;
+    using (SqlConnection connection = new SqlConnection( ConnectionString ))
+    {
+        SqlCommand cmd = new SqlCommand("Select * from tblProductInventory", connection);
+        connection.Open();
+        GridView1.DataSource = cmd.ExecuteReader();
+        GridView1.DataBind();
+    }
+}
+
+
+ ***********************************************we will learn about SqlCommand class*****************************************************************
+ 
+  --> ExecuteReader - Use when the T-SQL statement returns more than a single value. For example, if the query returns rows of data.
+  --> ExecuteNonQuery - Use when you want to perform an Insert, Update or Delete operation
+  --> ExecuteScalar - Use when the query returns a single(scalar) value. For example, queries that return the total number of rows in a table
+
+ the example below, we are using ExecuteScalar() method, as the T-SQL statement returns a single value. 
+   
+  protected void Page_Load(object sender, EventArgs e)
+  { 
+      string ConnectionString = ConfigurationManager.ConnectionStrings["DatabaseConnectionString"].ConnectionString;
+      using (SqlConnection connection = new SqlConnection("data source=.; database=Sample; integrated security=SSPI"))
+     {
+        //Create an instance of SqlCommand class, specifying the T-SQL command 
+        //that we want to execute, and the connection object.
+        SqlCommand cmd = new SqlCommand("Select Count(Id) from tblProductInventory", connection);
+        connection.Open();
+
+        //As the T-SQL statement that we want to execute return a single value, 
+        //use ExecuteScalar() method of the command object.
+
+        //Since the return type of ExecuteScalar() is object, we are type casting to int datatype
+
+        int TotalRows = (int)cmd.ExecuteScalar();
+        Response.Write("Total Rows = " + TotalRows.ToString());
+    }
+}
+
+***********************************************************************************************************************************************************
+
+ The following example performs an Insert, Update and Delete operations on a SQL server database using the ExecuteNonQuery() method of the SqlCommand object.
+ 
+ protected void Page_Load(object sender, EventArgs e)
+ {
+    string ConnectionString = ConfigurationManager.ConnectionStrings["DatabaseConnectionString"].ConnectionString;
+    using (SqlConnection connection = new SqlConnection("data source=.; database=Sample_Test_DB; integrated security=SSPI"))
+    {
+        //Create an instance of SqlCommand class, specifying the T-SQL command 
+        //that we want to execute, and the connection object.
+
+        SqlCommand cmd = new SqlCommand("insert into tblProductInventory values (103, 'Apple Laptops', 100)", connection);
+        connection.Open();
+
+        //Since we are performing an insert operation, use ExecuteNonQuery() 
+        //method of the command object. ExecuteNonQuery() method returns an 
+        //integer, which specifies the number of rows inserted
+
+        int rowsAffected = cmd.ExecuteNonQuery();
+        Response.Write("Inserted Rows = " + rowsAffected.ToString() + "<br/>");
+
+        //Set to CommandText to the update query. We are reusing the command object, 
+        //instead of creating a new command object
+
+        cmd.CommandText = "update tblProductInventory set QuantityAvailable = 101 where Id = 101";
+
+        //use ExecuteNonQuery() method to execute the update statement on the database
+        rowsAffected = cmd.ExecuteNonQuery();
+        Response.Write("Updated Rows = " + rowsAffected.ToString() + "<br/>");
+
+        //Set to CommandText to the delete query. We are reusing the command object, 
+        //instead of creating a new command object
+
+        cmd.CommandText = "Delete from tblProductInventory where Id = 102";
+        //use ExecuteNonQuery() method to delete the row from the database
+
+        rowsAffected = cmd.ExecuteNonQuery();
+        Response.Write("Deleted Rows = " + rowsAffected.ToString() + "<br/>");
+    }
+} 
+
+***********************************************************************************************************************************************************************
+SQL INJECTION
+***********************************************************************************************************************************************************************
+ Injection happen. 
+ String CS = ConfigurationManager.ConnectionStrings["DBCS"].ConnectionString;
+ using (SqlConnection con = new SqlConnection(CS))
+   {
+    string Command = "Select * from tblProductInventory where ProductName like '" + TextBox1.Text + "%'";
+    SqlCommand cmd = new SqlCommand(Command, con);
+    con.Open();
+    GridView1.DataSource = cmd.ExecuteReader();
+    GridView1.DataBind();
+  }
+
+ The above code can be easily re-written using parameterized queries to prevent sql injection attack. The re-written code is shown below.
+ Notice, that the query now uses parameter - @ProductName. 
+ The value for this parameter is then provided using the AddWithValue() method. 
+
+ TO avoid Sql Injection
+ string CS = ConfigurationManager.ConnectionStrings["DBCS"].ConnectionString;
+ using (SqlConnection con = new SqlConnection(CS))
+ {
+    // Parameterized query. @ProductName is the parameter
+    string Command = "Select * from tblProductInventory where ProductName like @ProductName" ;
+    SqlCommand cmd = new SqlCommand(Command, con);
+    // Provide the value for the parameter
+    cmd.Parameters.AddWithValue("@ProductName", TextBox1.Text + "%");
+    con.Open();
+    GridView1.DataSource = cmd.ExecuteReader();
+    GridView1.DataBind();
+ } 
+
+
+
+******************************************End******************************************************************************************************************************
