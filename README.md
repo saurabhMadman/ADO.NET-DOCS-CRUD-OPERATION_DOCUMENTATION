@@ -1,1 +1,1 @@
-***************************THIS DOC CONTAINS ALL THE CODE REQUIRED FOR CRUDE OPERTIONS IN ASP.net ***************************************** 
+THIS DOC CONTAINS ALL THE CODE REQUIRED FOR CRUDE OPERTIONS IN ASP.net MVC
